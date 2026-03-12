@@ -13,6 +13,10 @@ use tokio::time::sleep;
 async fn main() -> Result<()> {
     let args = cli::Args::parse();
 
+    // Resolve API key from environment
+    let api_key = std::env::var("NOVITA_API_KEY")
+        .map_err(|_| anyhow::anyhow!("NOVITA_API_KEY environment variable is not set"))?;
+
     // Resolve prompt
     let prompt_text = prompt::resolve(args.prompt, args.file.as_deref())?;
 
@@ -26,7 +30,7 @@ async fn main() -> Result<()> {
     eprintln!("Submitting generation request...");
     let task_id = api::submit(
         &client,
-        &args.api_key,
+        &api_key,
         &api::GenerateRequest {
             prompt: prompt_text,
             width: args.width,
@@ -52,7 +56,7 @@ async fn main() -> Result<()> {
     let image_urls = loop {
         sleep(Duration::from_millis(args.poll_interval_ms)).await;
 
-        match api::poll(&client, &args.api_key, &task_id).await? {
+        match api::poll(&client, &api_key, &task_id).await? {
             api::PollResult::Pending => {
                 // keep spinning
             }

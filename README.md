@@ -12,7 +12,7 @@ cargo build --release
 ## Usage
 
 ```bash
-# API key via env var (recommended)
+# Set your API key (required)
 export NOVITA_API_KEY=your_key_here
 
 # Prompt via flag
@@ -31,6 +31,16 @@ novita --prompt "a forest at dawn" --width 1280 --height 720 --seed 42
 novita --prompt "a red panda" --output red_panda.png
 ```
 
+## Authentication
+
+The API key is read exclusively from the `NOVITA_API_KEY` environment variable:
+
+```bash
+export NOVITA_API_KEY=your_key_here
+```
+
+The CLI will exit with a clear error if it is not set.
+
 ## Options
 
 | Flag | Default | Description |
@@ -40,8 +50,7 @@ novita --prompt "a red panda" --output red_panda.png
 | `--width` | 1024 | Image width in pixels |
 | `--height` | 1024 | Image height in pixels |
 | `--seed` | -1 | Seed (-1 = random) |
-| `--output` / `-o` | `novita_<timestamp>.png` | Output file path |
-| `--api-key` | `$NOVITA_API_KEY` | Novita API key |
+| `--output` / `-o` | `novita_hunyuan3_<timestamp>.png` | Output file path |
 
 ## Prompt resolution
 
