@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build (linux/x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Install musl tools
+        run: sudo apt-get install -y musl-tools
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Build
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Show sccache stats
+        run: sccache --show-stats
+
+      - name: Stage binary
+        run: |
+          cp target/x86_64-unknown-linux-musl/release/novita novita-linux-x86_64
+          chmod +x novita-linux-x86_64
+
+      - name: Update latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Build
+          body: |
+            Rolling release — updated on every push to `main`.
+
+            **Commit:** ${{ github.sha }}
+            **Built:** ${{ github.run_id }}
+
+            ### Usage in CI
+            ```bash
+            curl -sL https://github.com/zeroklaw/novita-cli/releases/download/latest/novita-linux-x86_64 \
+              -o /usr/local/bin/novita && chmod +x /usr/local/bin/novita
+            ```
+          prerelease: true
+          make_latest: false
+          files: novita-linux-x86_64
