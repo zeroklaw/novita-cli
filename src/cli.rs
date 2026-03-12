@@ -29,10 +29,6 @@ pub struct Args {
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
 
-    /// Novita API key. Falls back to NOVITA_API_KEY env var.
-    #[arg(long, env = "NOVITA_API_KEY", hide_env_values = true)]
-    pub api_key: String,
-
     /// How often to poll for task completion, in milliseconds.
     #[arg(long, default_value_t = 2000, hide = true)]
     pub poll_interval_ms: u64,
