@@ -91,5 +91,5 @@ fn default_output_path() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0);
-    PathBuf::from(format!("novita_{ts}.png"))
+    PathBuf::from(format!("novita_hunyuan3_{ts}.png"))
 }
