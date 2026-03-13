@@ -25,7 +25,12 @@ pub struct Args {
     #[arg(long, default_value_t = -1)]
     pub seed: i64,
 
-    /// Output file path. Defaults to novita_<timestamp>.png
+    /// Number of images to generate in parallel.
+    #[arg(short, long, default_value_t = 1)]
+    pub count: usize,
+
+    /// Output file path. Defaults to novita_hunyuan3_<timestamp>.png
+    /// When --count > 1, an index is appended: novita_hunyuan3_<timestamp>_0.png etc.
     #[arg(short, long, value_name = "FILE")]
     pub output: Option<PathBuf>,
 

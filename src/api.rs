@@ -6,7 +6,7 @@ const BASE_URL: &str = "https://api.novita.ai/v3/async";
 
 // ── Submit ────────────────────────────────────────────────────────────────────
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct GenerateRequest {
     pub prompt: String,
     pub width: u32,
