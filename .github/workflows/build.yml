@@ -1,8 +1,16 @@
-name: Build
+name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0, or 'latest' for rolling)"
+        required: true
+        default: "latest"
+      prerelease:
+        description: "Mark as pre-release"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -40,22 +48,88 @@ jobs:
           cp target/x86_64-unknown-linux-musl/release/novita novita-linux-x86_64
           chmod +x novita-linux-x86_64
 
-      - name: Update latest release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: novita-linux-x86_64
+          path: novita-linux-x86_64
+
+  build-macos:
+    name: Build (macos/arm64)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Build
+        env:
+          RUSTC_WRAPPER: sccache
+          SCCACHE_GHA_ENABLED: "true"
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Show sccache stats
+        run: sccache --show-stats
+
+      - name: Stage binary
+        run: |
+          cp target/aarch64-apple-darwin/release/novita novita-macos-arm64
+          chmod +x novita-macos-arm64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: novita-macos-arm64
+          path: novita-macos-arm64
+
+  release:
+    name: Create Release
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect binaries
+        run: |
+          mv artifacts/novita-linux-x86_64/novita-linux-x86_64 .
+          mv artifacts/novita-macos-arm64/novita-macos-arm64 .
+
+      - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          name: Latest Build
+          tag_name: ${{ inputs.tag }}
+          name: "${{ inputs.tag == 'latest' && 'Latest Build' || inputs.tag }}"
           body: |
-            Rolling release — updated on every push to `main`.
-
+            **Tag:** `${{ inputs.tag }}`
             **Commit:** ${{ github.sha }}
             **Built:** ${{ github.run_id }}
 
-            ### Usage in CI
+            ### Download
+            | Platform | Binary |
+            |----------|--------|
+            | Linux x86_64 | `novita-linux-x86_64` |
+            | macOS arm64 | `novita-macos-arm64` |
+
+            ### Usage
             ```bash
-            curl -sL https://github.com/zeroklaw/novita-cli/releases/download/latest/novita-linux-x86_64 \
+            # Linux
+            curl -sL https://github.com/zeroklaw/novita-cli/releases/download/${{ inputs.tag }}/novita-linux-x86_64 \
+              -o /usr/local/bin/novita && chmod +x /usr/local/bin/novita
+
+            # macOS (Apple Silicon)
+            curl -sL https://github.com/zeroklaw/novita-cli/releases/download/${{ inputs.tag }}/novita-macos-arm64 \
               -o /usr/local/bin/novita && chmod +x /usr/local/bin/novita
             ```
-          prerelease: true
-          make_latest: false
-          files: novita-linux-x86_64
+          prerelease: ${{ inputs.prerelease }}
+          make_latest: ${{ inputs.tag != 'latest' }}
+          files: |
+            novita-linux-x86_64
+            novita-macos-arm64
