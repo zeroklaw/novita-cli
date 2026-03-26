@@ -50,7 +50,19 @@ The CLI will exit with a clear error if it is not set.
 | `--width` | 1024 | Image width in pixels |
 | `--height` | 1024 | Image height in pixels |
 | `--seed` | -1 | Seed (-1 = random) |
-| `--output` / `-o` | `novita_hunyuan3_<timestamp>.png` | Output file path |
+| `--count` / `-c` | 1 | Number of images to generate in parallel |
+| `--output` / `-o` | `novita_hunyuan3_<timestamp>.png` | Output file path (index appended when `--count > 1`) |
+
+## Parallel generation
+
+Use `--count N` to submit N requests simultaneously and poll/download them all concurrently:
+
+```bash
+novita --prompt "a crab in a top hat" --count 4
+# outputs: novita_hunyuan3_<ts>_0.png ... novita_hunyuan3_<ts>_3.png
+```
+
+All requests are submitted before waiting on any of them, so total time ≈ single-image time regardless of N (up to API rate limits).
 
 ## Prompt resolution
 
